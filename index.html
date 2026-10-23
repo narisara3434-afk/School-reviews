@@ -1,4 +1,3 @@
-HTML
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -55,9 +54,10 @@ HTML
                 </div>
             </div>
             
-            <button onclick="toggleModal('configModal')" class="text-xs bg-amber-100 hover:bg-amber-200 text-amber-900 font-medium px-3.5 py-2 rounded-xl transition flex items-center gap-2">
-                <i class="fa-solid fa-link"></i> ลิงก์ Google Sheet
-            </button>
+            <!-- ปุ่มเขียนรีวิว -->
+            <a href="https://forms.gle/JK4MRKHTwodyWr4m8" target="_blank" class="text-xs bg-amber-600 hover:bg-amber-700 text-white font-medium px-4 py-2.5 rounded-xl transition flex items-center gap-2 shadow-sm">
+                <i class="fa-solid fa-pen-to-square"></i> เขียนรีวิวโรงเรียน
+            </a>
         </div>
     </header>
 
@@ -125,40 +125,44 @@ HTML
 
     </main>
 
+    <!-- Modal สำหรับแสดงข้อมูลแบบเต็ม (ดูเพิ่มเติม) -->
+    <div id="detailModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 md:p-8 shadow-2xl border border-amber-100">
+            <div class="flex justify-between items-start border-b border-amber-100 pb-4 mb-4">
+                <div>
+                    <span id="modalProvince" class="inline-block bg-amber-100 text-amber-800 text-[11px] font-semibold px-2.5 py-0.5 rounded-full mb-1"></span>
+                    <h3 id="modalSchoolName" class="text-xl font-bold text-amber-950"></h3>
+                </div>
+                <button onclick="closeDetailModal()" class="w-8 h-8 rounded-full bg-amber-50 hover:bg-amber-100 text-amber-800 flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div id="modalContentBody" class="space-y-4 text-xs md:text-sm text-gray-700">
+                <!-- เนื้อหาจะถูกเติมด้วย JavaScript -->
+            </div>
+
+            <div class="mt-6 pt-4 border-t border-amber-100 flex justify-end">
+                <button onclick="closeDetailModal()" class="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium rounded-xl transition">
+                    ปิดหน้าต่าง
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Footer -->
     <footer class="bg-amber-900 text-amber-100 text-xs py-6 mt-12 text-center border-t border-amber-800">
         <p>© 2026 ระบบส่งต่อข้อมูลโรงเรียนและการศึกษาต่อ - เพื่อการเรียนรู้และพัฒนาการของเด็กพิเศษ</p>
     </footer>
 
-    <!-- Config Modal -->
-    <div id="configModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-amber-100">
-            <h3 class="text-lg font-bold text-amber-950 mb-2">ลิงก์ข้อมูล Google Sheet CSV</h3>
-            <p class="text-xs text-gray-600 mb-4">
-                ระบบตั้งค่าใช้ลิงก์ปัจจุบันของคุณเรียบร้อยแล้ว คุณสามารถเปลี่ยนเป็นลิงก์อื่นได้ที่นี่:
-            </p>
-            
-            <input type="text" id="sheetUrlInput" 
-                class="w-full p-3 bg-warmbg border border-amber-200 rounded-xl text-xs mb-4 focus:ring-2 focus:ring-amber-500 outline-none">
-
-            <div class="flex justify-end gap-2">
-                <button onclick="toggleModal('configModal')" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs rounded-xl font-medium">ยกเลิก</button>
-                <button onclick="saveSheetUrl()" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs rounded-xl font-medium">บันทึกและโหลดใหม่</button>
-            </div>
-        </div>
-    </div>
-
     <!-- JavaScript Logic -->
     <script>
-        // ลิงก์ Google Sheets CSV ที่ส่งมา
-        const DEFAULT_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTakBL986QD-PAo56qsw5TRkuXds28G3vop22nYWLBc01iUV6lUIGp0JjxvIrjocK849YcdPkAW9AwX/pub?output=csv";
+        const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTakBL986QD-PAo56qsw5TRkuXds28G3vop22nYWLBc01iUV6lUIGp0JjxvIrjocK849YcdPkAW9AwX/pub?output=csv";
 
         let allReviews = [];
 
         document.addEventListener('DOMContentLoaded', () => {
-            const currentUrl = localStorage.getItem('custom_sheet_url') || DEFAULT_SHEET_URL;
-            document.getElementById('sheetUrlInput').value = currentUrl;
-            fetchFromGoogleSheet(currentUrl);
+            fetchFromGoogleSheet(SHEET_URL);
 
             // Filter listeners
             document.getElementById('filterSchool').addEventListener('input', applyFilters);
@@ -279,7 +283,7 @@ HTML
                 return;
             }
 
-            grid.innerHTML = data.map(item => {
+            grid.innerHTML = data.map((item, index) => {
                 const school = item['ชื่อโรงเรียน'] || 'ไม่ระบุชื่อโรงเรียน';
                 const province = item['จังหวัด'] || 'ไม่ระบุจังหวัด';
                 const specialty = item['ลักษณะความพิเศษของน้อง'] || 'ทั่วไป';
@@ -290,8 +294,6 @@ HTML
                 const happinessRating = item['ผู้ปกครองคิดว่าลูก มีความสุขกับการเรียนที่นี่มากแค่ไหน'] || 0;
                 const highlight = item['จุดเด่น'] || '-';
                 const warning = item['จุดด้อยหรือข้อควรระวัง'] || '-';
-                const advice = item['อยากฝากอะไรถึงรุ่นน้อง '] || '-';
-                const condition = item['อธิบายเพิ่มเติมเกี่ยวกับโรค หรือข้อจำกัดของน้อง (ถ้ามี)'] || '';
 
                 return `
                     <div class="bg-white rounded-3xl p-6 custom-shadow border border-amber-100 flex flex-col justify-between hover:border-amber-300 transition-all duration-300">
@@ -319,12 +321,6 @@ HTML
                                 </span>
                             </div>
 
-                            ${condition ? `
-                                <div class="bg-warmbg p-3 rounded-2xl border border-amber-100 text-xs text-amber-900/80 mb-4">
-                                    <b>ข้อจำกัด/อาการของน้อง:</b> ${condition}
-                                </div>
-                            ` : ''}
-
                             <!-- Ratings -->
                             <div class="grid grid-cols-2 gap-2 bg-amber-50/50 p-3 rounded-2xl mb-4 text-xs">
                                 <div>
@@ -337,7 +333,7 @@ HTML
                                 </div>
                             </div>
 
-                            <!-- Review Content Highlights -->
+                            <!-- Review Highlights -->
                             <div class="space-y-2 text-xs text-gray-700 mb-4">
                                 <div>
                                     <span class="font-semibold text-emerald-700"><i class="fa-solid fa-circle-check"></i> จุดเด่น:</span>
@@ -352,35 +348,79 @@ HTML
                             </div>
                         </div>
 
-                        <!-- Footer Details -->
-                        <div class="pt-3 border-t border-amber-100/80 text-xs space-y-2">
-                            <div class="text-amber-900">
-                                <i class="fa-solid fa-coins text-amber-500"></i> <b>ค่าใช้จ่ายโดยประมาณ:</b> ${cost}
-                            </div>
-                            ${advice !== '-' ? `
-                            <div class="bg-amber-50/80 p-2.5 rounded-xl border border-amber-100 text-amber-900 italic">
-                                "<i class="fa-solid fa-quote-left text-amber-300"></i> ${advice}"
-                            </div>
-                            ` : ''}
+                        <!-- Card Footer -->
+                        <div class="pt-3 border-t border-amber-100/80 flex justify-between items-center text-xs">
+                            <span class="text-amber-900 truncate max-w-[180px]">
+                                <i class="fa-solid fa-coins text-amber-500"><b>ค่าใช้จ่าย:</b></i> ${cost}
+                            </span>
+                            <button onclick='openDetailModal(${JSON.stringify(item)})' class="bg-amber-100 hover:bg-amber-200 text-amber-900 font-medium px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 shrink-0">
+                                ดูเพิ่มเติม <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                            </button>
                         </div>
                     </div>
                 `;
             }).join('');
         }
 
-        function toggleModal(id) {
-            document.getElementById(id).classList.toggle('hidden');
+        function openDetailModal(item) {
+            document.getElementById('modalProvince').textContent = `📍 ${item['จังหวัด'] || 'ไม่ระบุจังหวัด'}`;
+            document.getElementById('modalSchoolName').textContent = item['ชื่อโรงเรียน'] || 'ไม่ระบุชื่อโรงเรียน';
+
+            const body = document.getElementById('modalContentBody');
+            
+            // สร้างรายการแสดงข้อมูลทั้งหมดจากแถวข้อมูล
+            let html = `
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-warmbg p-4 rounded-2xl border border-amber-100">
+                    <div><b>ลักษณะความพิเศษ:</b> ${item['ลักษณะความพิเศษของน้อง'] || '-'}</div>
+                    <div><b>ระดับชั้นที่เข้าเรียน:</b> ${item['ระดับชั้นที่เข้าเรียน'] || '-'}</div>
+                    <div><b>ปี พ.ศ. ที่เข้าเรียน:</b> ${String(item['ปี พ.ศ. ที่เข้าเรียน'] || '-').replace('.0', '')}</div>
+                    <div><b>ค่าใช้จ่ายต่อปี:</b> ${item['ค่าใช้จ่ายต่อปีโดยประมาณ'] || '-'}</div>
+                </div>
+
+                ${item['อธิบายเพิ่มเติมเกี่ยวกับโรค หรือข้อจำกัดของน้อง (ถ้ามี)'] ? `
+                <div class="p-3 bg-amber-50/60 rounded-2xl border border-amber-100">
+                    <b class="text-amber-900 block mb-1">อาการ / ข้อจำกัดของน้อง:</b>
+                    <p class="text-gray-600">${item['อธิบายเพิ่มเติมเกี่ยวกับโรค หรือข้อจำกัดของน้อง (ถ้ามี)']}</p>
+                </div>` : ''}
+
+                <div class="p-3 bg-warmbg rounded-2xl border border-amber-100 space-y-1">
+                    <b class="text-amber-900 block mb-1">ช่องทางการติดต่อโรงเรียน:</b>
+                    <p class="text-gray-600">${item['ช่องทางการติดต่อโรงเรียน'] || 'ไม่ระบุ'}</p>
+                </div>
+
+                <div class="p-3 bg-warmbg rounded-2xl border border-amber-100">
+                    <b class="text-amber-900 block mb-1">วิธีการสมัคร และเกณฑ์การรับเข้าเรียน:</b>
+                    <p class="text-gray-600">${item['วิธีการสมัคร เกณฑ์การรับเข้าเรียน'] || '-'}</p>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div class="p-3 bg-emerald-50/60 rounded-2xl border border-emerald-100">
+                        <b class="text-emerald-900 block mb-1"><i class="fa-solid fa-circle-check"></i> จุดเด่น:</b>
+                        <p class="text-gray-600">${item['จุดเด่น'] || '-'}</p>
+                    </div>
+                    <div class="p-3 bg-rose-50/60 rounded-2xl border border-rose-100">
+                        <b class="text-rose-900 block mb-1"><i class="fa-solid fa-circle-exclamation"></i> จุดด้อยหรือข้อควรระวัง:</b>
+                        <p class="text-gray-600">${item['จุดด้อยหรือข้อควรระวัง'] || '-'}</p>
+                    </div>
+                </div>
+
+                <div class="p-3 bg-warmbg rounded-2xl border border-amber-100">
+                    <b class="text-amber-900 block mb-1">เหตุผลที่เลือกเรียนที่นี่:</b>
+                    <p class="text-gray-600">${item['เหตุผลที่เลือกเรียนที่นี่'] || '-'}</p>
+                </div>
+
+                ${item['อยากฝากอะไรถึงรุ่นน้อง '] ? `
+                <div class="p-3 bg-amber-100/60 rounded-2xl border border-amber-200 italic text-amber-950">
+                    <b>💬 อยากฝากอะไรถึงรุ่นน้อง:</b> "${item['อยากฝากอะไรถึงรุ่นน้อง ']}"
+                </div>` : ''}
+            `;
+
+            body.innerHTML = html;
+            document.getElementById('detailModal').classList.remove('hidden');
         }
 
-        function saveSheetUrl() {
-            const url = document.getElementById('sheetUrlInput').value.trim();
-            if (url) {
-                localStorage.setItem('custom_sheet_url', url);
-                fetchFromGoogleSheet(url);
-                toggleModal('configModal');
-            } else {
-                alert('กรุณากรอก URL ลิงก์ CSV');
-            }
+        function closeDetailModal() {
+            document.getElementById('detailModal').classList.add('hidden');
         }
     </script>
 </body>
