@@ -1,0 +1,387 @@
+HTML
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบค้นหาและรีวิวโรงเรียนสำหรับเด็กพิเศษ</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- PapaParse CDN สำหรับแปลง Google Sheets CSV -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Kanit Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Kanit', 'sans-serif'],
+                    },
+                    colors: {
+                        warmbg: '#FDFBF7',
+                        warmcard: '#FFFFFF',
+                        brandPrimary: '#D97706',
+                        brandAccent: '#EA580C',
+                        brandDark: '#78350F',
+                        brandLight: '#FEF3C7',
+                        softGray: '#F3F4F6'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #FDFBF7; font-family: 'Kanit', sans-serif; color: #451A03; }
+        .glass-header { background: rgba(253, 251, 247, 0.95); backdrop-filter: blur(8px); }
+        .custom-shadow { box-shadow: 0 10px 25px -5px rgba(217, 119, 6, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.03); }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between">
+
+    <!-- Header Section -->
+    <header class="sticky top-0 z-40 glass-header border-b border-amber-100/80 px-4 py-4 md:px-8">
+        <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-md">
+                    <i class="fa-solid fa-graduation-cap text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl md:text-2xl font-bold text-amber-950">ส่งต่อข้อมูลโรงเรียนและการศึกษาต่อ</h1>
+                    <p class="text-xs text-amber-700">แบ่งปันประสบการณ์และค้นหาโรงเรียนที่เหมาะสมสำหรับน้องๆ</p>
+                </div>
+            </div>
+            
+            <button onclick="toggleModal('configModal')" class="text-xs bg-amber-100 hover:bg-amber-200 text-amber-900 font-medium px-3.5 py-2 rounded-xl transition flex items-center gap-2">
+                <i class="fa-solid fa-link"></i> ลิงก์ Google Sheet
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="max-w-6xl mx-auto px-4 py-8 flex-grow w-full">
+
+        <!-- Search & Filter Card -->
+        <section class="bg-white rounded-3xl p-6 md:p-8 custom-shadow border border-amber-100/60 mb-8">
+            <h2 class="text-lg font-semibold text-amber-900 mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-sliders text-amber-600"></i> ค้นหาและกรองข้อมูลโรงเรียน
+            </h2>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- 1. ค้นหาชื่อโรงเรียน -->
+                <div>
+                    <label class="block text-xs font-medium text-amber-900/70 mb-1">ชื่อโรงเรียน</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-amber-400 text-sm"></i>
+                        <input type="text" id="filterSchool" placeholder="พิมพ์ชื่อโรงเรียน..." 
+                            class="w-full pl-9 pr-3 py-2.5 bg-warmbg border border-amber-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 transition">
+                    </div>
+                </div>
+
+                <!-- 2. ประเภทความพิเศษ -->
+                <div>
+                    <label class="block text-xs font-medium text-amber-900/70 mb-1">ประเภทความพิเศษ</label>
+                    <select id="filterSpecialty" class="w-full px-3 py-2.5 bg-warmbg border border-amber-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 transition">
+                        <option value="">-- ทั้งหมด --</option>
+                    </select>
+                </div>
+
+                <!-- 3. จังหวัด -->
+                <div>
+                    <label class="block text-xs font-medium text-amber-900/70 mb-1">จังหวัด</label>
+                    <select id="filterProvince" class="w-full px-3 py-2.5 bg-warmbg border border-amber-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 transition">
+                        <option value="">-- ทั้งหมด --</option>
+                    </select>
+                </div>
+
+                <!-- 4. ปีการศึกษาที่เข้าเรียน -->
+                <div>
+                    <label class="block text-xs font-medium text-amber-900/70 mb-1">ปี พ.ศ. ที่เข้าเรียน</label>
+                    <select id="filterYear" class="w-full px-3 py-2.5 bg-warmbg border border-amber-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 transition">
+                        <option value="">-- ทั้งหมด --</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Clear Filter Button -->
+            <div class="mt-5 flex justify-between items-center pt-4 border-t border-amber-50">
+                <span id="resultCount" class="text-xs font-medium text-amber-700">กำลังโหลดข้อมูล...</span>
+                <button onclick="resetFilters()" class="text-xs font-medium text-amber-600 hover:text-amber-800 flex items-center gap-1 transition">
+                    <i class="fa-solid fa-rotate-left"></i> ล้างการกรองทั้งหมด
+                </button>
+            </div>
+        </section>
+
+        <!-- Results Display Grid -->
+        <section id="reviewsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="col-span-full py-12 text-center text-amber-700">
+                <i class="fa-solid fa-spinner fa-spin text-3xl mb-3"></i>
+                <p class="text-sm">กำลังเชื่อมต่อข้อมูลจาก Google Sheet...</p>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-amber-900 text-amber-100 text-xs py-6 mt-12 text-center border-t border-amber-800">
+        <p>© 2026 ระบบส่งต่อข้อมูลโรงเรียนและการศึกษาต่อ - เพื่อการเรียนรู้และพัฒนาการของเด็กพิเศษ</p>
+    </footer>
+
+    <!-- Config Modal -->
+    <div id="configModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-amber-100">
+            <h3 class="text-lg font-bold text-amber-950 mb-2">ลิงก์ข้อมูล Google Sheet CSV</h3>
+            <p class="text-xs text-gray-600 mb-4">
+                ระบบตั้งค่าใช้ลิงก์ปัจจุบันของคุณเรียบร้อยแล้ว คุณสามารถเปลี่ยนเป็นลิงก์อื่นได้ที่นี่:
+            </p>
+            
+            <input type="text" id="sheetUrlInput" 
+                class="w-full p-3 bg-warmbg border border-amber-200 rounded-xl text-xs mb-4 focus:ring-2 focus:ring-amber-500 outline-none">
+
+            <div class="flex justify-end gap-2">
+                <button onclick="toggleModal('configModal')" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs rounded-xl font-medium">ยกเลิก</button>
+                <button onclick="saveSheetUrl()" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs rounded-xl font-medium">บันทึกและโหลดใหม่</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // ลิงก์ Google Sheets CSV ที่ส่งมา
+        const DEFAULT_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTakBL986QD-PAo56qsw5TRkuXds28G3vop22nYWLBc01iUV6lUIGp0JjxvIrjocK849YcdPkAW9AwX/pub?output=csv";
+
+        let allReviews = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const currentUrl = localStorage.getItem('custom_sheet_url') || DEFAULT_SHEET_URL;
+            document.getElementById('sheetUrlInput').value = currentUrl;
+            fetchFromGoogleSheet(currentUrl);
+
+            // Filter listeners
+            document.getElementById('filterSchool').addEventListener('input', applyFilters);
+            document.getElementById('filterSpecialty').addEventListener('change', applyFilters);
+            document.getElementById('filterProvince').addEventListener('change', applyFilters);
+            document.getElementById('filterYear').addEventListener('change', applyFilters);
+        });
+
+        function fetchFromGoogleSheet(url) {
+            Papa.parse(url, {
+                download: true,
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    allReviews = results.data.filter(item => {
+                        const school = item['ชื่อโรงเรียน'];
+                        return school && String(school).trim() !== '';
+                    });
+                    initFilters();
+                    renderReviews(allReviews);
+                },
+                error: function(err) {
+                    document.getElementById('reviewsGrid').innerHTML = `
+                        <div class="col-span-full py-12 text-center text-rose-700 bg-white rounded-3xl border border-rose-100 p-8">
+                            <i class="fa-solid fa-triangle-exclamation text-4xl mb-3 text-rose-400"></i>
+                            <p class="font-medium text-base">ไม่สามารถโหลดข้อมูลจาก Google Sheet ได้</p>
+                            <p class="text-xs text-rose-500 mt-1">กรุณาตรวจสอบการตั้งค่า Publish to Web และสิทธิ์การเข้าถึงไฟล์ CSV</p>
+                        </div>
+                    `;
+                }
+            });
+        }
+
+        function initFilters() {
+            populateSelect('filterSpecialty', 'ลักษณะความพิเศษของน้อง');
+            populateSelect('filterProvince', 'จังหวัด');
+            populateSelect('filterYear', 'ปี พ.ศ. ที่เข้าเรียน');
+        }
+
+        function populateSelect(elementId, columnKey) {
+            const select = document.getElementById(elementId);
+            const values = new Set();
+
+            allReviews.forEach(item => {
+                let val = item[columnKey];
+                if (val) {
+                    val = String(val).replace('.0', '').trim();
+                    if (val) values.add(val);
+                }
+            });
+
+            select.innerHTML = '<option value="">-- ทั้งหมด --</option>';
+            Array.from(values).sort().forEach(val => {
+                const opt = document.createElement('option');
+                opt.value = val;
+                opt.textContent = val;
+                select.appendChild(opt);
+            });
+        }
+
+        function applyFilters() {
+            const schoolVal = document.getElementById('filterSchool').value.toLowerCase().trim();
+            const specialtyVal = document.getElementById('filterSpecialty').value;
+            const provinceVal = document.getElementById('filterProvince').value;
+            const yearVal = document.getElementById('filterYear').value;
+
+            const filtered = allReviews.filter(item => {
+                const schoolMatch = !schoolVal || (item['ชื่อโรงเรียน'] && item['ชื่อโรงเรียน'].toLowerCase().includes(schoolVal));
+                
+                const specItem = String(item['ลักษณะความพิเศษของน้อง'] || '');
+                const specialtyMatch = !specialtyVal || specItem.includes(specialtyVal);
+                
+                const provItem = String(item['จังหวัด'] || '');
+                const provinceMatch = !provinceVal || provItem.includes(provinceVal);
+
+                const yearItem = String(item['ปี พ.ศ. ที่เข้าเรียน'] || '').replace('.0', '').trim();
+                const yearMatch = !yearVal || yearItem === yearVal;
+
+                return schoolMatch && specialtyMatch && provinceMatch && yearMatch;
+            });
+
+            renderReviews(filtered);
+        }
+
+        function resetFilters() {
+            document.getElementById('filterSchool').value = '';
+            document.getElementById('filterSpecialty').value = '';
+            document.getElementById('filterProvince').value = '';
+            document.getElementById('filterYear').value = '';
+            renderReviews(allReviews);
+        }
+
+        function renderStars(rating) {
+            const num = parseFloat(rating) || 0;
+            let stars = '';
+            for (let i = 1; i <= 5; i++) {
+                if (i <= num) {
+                    stars += '<i class="fa-solid fa-star text-amber-400"></i>';
+                } else {
+                    stars += '<i class="fa-regular fa-star text-amber-200"></i>';
+                }
+            }
+            return stars;
+        }
+
+        function renderReviews(data) {
+            const grid = document.getElementById('reviewsGrid');
+            document.getElementById('resultCount').textContent = `พบข้อมูล ${data.length} รายการ`;
+
+            if (data.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full py-12 text-center text-amber-800 bg-white rounded-3xl border border-amber-100 p-8">
+                        <i class="fa-solid fa-folder-open text-4xl mb-3 text-amber-300"></i>
+                        <p class="font-medium text-base">ไม่พบข้อมูลการรีวิวที่ตรงกับเงื่อนไข</p>
+                        <p class="text-xs text-amber-600 mt-1">ลองเปลี่ยนคำค้นหา หรือกดล้างการกรอง</p>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = data.map(item => {
+                const school = item['ชื่อโรงเรียน'] || 'ไม่ระบุชื่อโรงเรียน';
+                const province = item['จังหวัด'] || 'ไม่ระบุจังหวัด';
+                const specialty = item['ลักษณะความพิเศษของน้อง'] || 'ทั่วไป';
+                const year = String(item['ปี พ.ศ. ที่เข้าเรียน'] || 'ไม่ระบุ').replace('.0', '');
+                const level = item['ระดับชั้นที่เข้าเรียน'] || '-';
+                const cost = item['ค่าใช้จ่ายต่อปีโดยประมาณ'] || 'ไม่ระบุ';
+                const careRating = item['การดูแลเอาใจใส่ของครูต่อเด็กพิเศษ'] || 0;
+                const happinessRating = item['ผู้ปกครองคิดว่าลูก มีความสุขกับการเรียนที่นี่มากแค่ไหน'] || 0;
+                const highlight = item['จุดเด่น'] || '-';
+                const warning = item['จุดด้อยหรือข้อควรระวัง'] || '-';
+                const advice = item['อยากฝากอะไรถึงรุ่นน้อง '] || '-';
+                const condition = item['อธิบายเพิ่มเติมเกี่ยวกับโรค หรือข้อจำกัดของน้อง (ถ้ามี)'] || '';
+
+                return `
+                    <div class="bg-white rounded-3xl p-6 custom-shadow border border-amber-100 flex flex-col justify-between hover:border-amber-300 transition-all duration-300">
+                        <div>
+                            <!-- Header Info -->
+                            <div class="flex justify-between items-start gap-2 mb-3">
+                                <div>
+                                    <span class="inline-block bg-amber-100 text-amber-800 text-[11px] font-semibold px-2.5 py-0.5 rounded-full mb-1">
+                                        📍 ${province}
+                                    </span>
+                                    <h3 class="text-lg font-bold text-amber-950 leading-snug">${school}</h3>
+                                </div>
+                                <span class="bg-orange-50 border border-orange-200 text-orange-700 text-xs px-2.5 py-1 rounded-xl font-medium shrink-0">
+                                    ปีที่เข้า: ${year}
+                                </span>
+                            </div>
+
+                            <!-- Badges -->
+                            <div class="flex flex-wrap gap-1.5 mb-4 text-xs">
+                                <span class="bg-amber-50 text-amber-900 border border-amber-200/60 px-2.5 py-0.5 rounded-lg">
+                                    <b>ความพิเศษ:</b> ${specialty}
+                                </span>
+                                <span class="bg-amber-50 text-amber-900 border border-amber-200/60 px-2.5 py-0.5 rounded-lg">
+                                    <b>ระดับชั้น:</b> ${level}
+                                </span>
+                            </div>
+
+                            ${condition ? `
+                                <div class="bg-warmbg p-3 rounded-2xl border border-amber-100 text-xs text-amber-900/80 mb-4">
+                                    <b>ข้อจำกัด/อาการของน้อง:</b> ${condition}
+                                </div>
+                            ` : ''}
+
+                            <!-- Ratings -->
+                            <div class="grid grid-cols-2 gap-2 bg-amber-50/50 p-3 rounded-2xl mb-4 text-xs">
+                                <div>
+                                    <span class="text-amber-800 block mb-0.5">การดูแลของครู:</span>
+                                    <div>${renderStars(careRating)}</div>
+                                </div>
+                                <div>
+                                    <span class="text-amber-800 block mb-0.5">ความสุขของลูก:</span>
+                                    <div>${renderStars(happinessRating)}</div>
+                                </div>
+                            </div>
+
+                            <!-- Review Content Highlights -->
+                            <div class="space-y-2 text-xs text-gray-700 mb-4">
+                                <div>
+                                    <span class="font-semibold text-emerald-700"><i class="fa-solid fa-circle-check"></i> จุดเด่น:</span>
+                                    <p class="text-gray-600 mt-0.5 pl-4">${highlight}</p>
+                                </div>
+                                ${warning !== '-' ? `
+                                <div>
+                                    <span class="font-semibold text-rose-600"><i class="fa-solid fa-circle-exclamation"></i> ข้อควรระวัง:</span>
+                                    <p class="text-gray-600 mt-0.5 pl-4">${warning}</p>
+                                </div>
+                                ` : ''}
+                            </div>
+                        </div>
+
+                        <!-- Footer Details -->
+                        <div class="pt-3 border-t border-amber-100/80 text-xs space-y-2">
+                            <div class="text-amber-900">
+                                <i class="fa-solid fa-coins text-amber-500"></i> <b>ค่าใช้จ่ายโดยประมาณ:</b> ${cost}
+                            </div>
+                            ${advice !== '-' ? `
+                            <div class="bg-amber-50/80 p-2.5 rounded-xl border border-amber-100 text-amber-900 italic">
+                                "<i class="fa-solid fa-quote-left text-amber-300"></i> ${advice}"
+                            </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleModal(id) {
+            document.getElementById(id).classList.toggle('hidden');
+        }
+
+        function saveSheetUrl() {
+            const url = document.getElementById('sheetUrlInput').value.trim();
+            if (url) {
+                localStorage.setItem('custom_sheet_url', url);
+                fetchFromGoogleSheet(url);
+                toggleModal('configModal');
+            } else {
+                alert('กรุณากรอก URL ลิงก์ CSV');
+            }
+        }
+    </script>
+</body>
+</html>
