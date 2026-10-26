@@ -152,7 +152,7 @@
 
     <!-- Footer -->
     <footer class="bg-amber-900 text-amber-100 text-xs py-6 mt-12 text-center border-t border-amber-800">
-        <p>© 2026 ระบบส่งต่อข้อมูลโรงเรียนและการศึกษาต่อ - เพื่อการเรียนรู้และพัฒนาการของเด็กพิเศษ</p>
+        <p>ชมรมผู้ปกครอง ครู และศิษย์เก่า การศึกษาพิเศษ โรงเรียนสาธิตละอออุทิศ มหาวิทยาลัยสวนดุสิต</p>
     </footer>
 
     <!-- JavaScript Logic -->
@@ -368,7 +368,15 @@
 
             const body = document.getElementById('modalContentBody');
             
-            // สร้างรายการแสดงข้อมูลทั้งหมดจากแถวข้อมูล
+            // ดึงค่าคะแนนดาวแต่ละหัวข้อ
+            const r1 = item['การดูแลเอาใจใส่ของครูต่อเด็กพิเศษ'] || 0;
+            const r2 = item['การสื่อสารของครูถึงผู้ปกครองเกิดขึ้นอย่างสม่ำเสมอ'] || 0;
+            const r3 = item['การถ่ายทอดความรู้ด้านวิชาการ'] || 0;
+            const r4 = item['สังคมในโรงเรียนเป็นมิตรต่อเด็กพิเศษ'] || 0;
+            const r5 = item['ผู้ปกครองคิดว่าลูก มีความสุขกับการเรียนที่นี่มากแค่ไหน'] || 0;
+            const r6 = item['ความปลอดภัยของอาคารสถานที่'] || 0;
+            const r7 = item['ความสะอาดของอาคารสถานที่'] || 0;
+
             let html = `
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-warmbg p-4 rounded-2xl border border-amber-100">
                     <div><b>ลักษณะความพิเศษ:</b> ${item['ลักษณะความพิเศษของน้อง'] || '-'}</div>
@@ -377,8 +385,43 @@
                     <div><b>ค่าใช้จ่ายต่อปี:</b> ${item['ค่าใช้จ่ายต่อปีโดยประมาณ'] || '-'}</div>
                 </div>
 
+                <!-- ส่วนแสดงผลคะแนนดาวทุกหัวข้อ -->
+                <div class="bg-amber-50/60 p-4 rounded-2xl border border-amber-100">
+                    <b class="text-amber-900 block mb-3 text-sm"><i class="fa-solid fa-star text-amber-500"></i> ผลการประเมินความพึงพอใจในด้านต่างๆ</b>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                        <div class="flex justify-between items-center bg-white p-2.5 rounded-xl border border-amber-100">
+                            <span>การดูแลเอาใจใส่ของครู:</span>
+                            <div class="flex items-center gap-1"><span>${r1}</span> <div class="flex">${renderStars(r1)}</div></div>
+                        </div>
+                        <div class="flex justify-between items-center bg-white p-2.5 rounded-xl border border-amber-100">
+                            <span>การสื่อสารกับผู้ปกครอง:</span>
+                            <div class="flex items-center gap-1"><span>${r2}</span> <div class="flex">${renderStars(r2)}</div></div>
+                        </div>
+                        <div class="flex justify-between items-center bg-white p-2.5 rounded-xl border border-amber-100">
+                            <span>การถ่ายทอดวิชาการ:</span>
+                            <div class="flex items-center gap-1"><span>${r3}</span> <div class="flex">${renderStars(r3)}</div></div>
+                        </div>
+                        <div class="flex justify-between items-center bg-white p-2.5 rounded-xl border border-amber-100">
+                            <span>สังคมในโรงเรียนเป็นมิตร:</span>
+                            <div class="flex items-center gap-1"><span>${r4}</span> <div class="flex">${renderStars(r4)}</div></div>
+                        </div>
+                        <div class="flex justify-between items-center bg-white p-2.5 rounded-xl border border-amber-100">
+                            <span>ความสุขของเด็ก:</span>
+                            <div class="flex items-center gap-1"><span>${r5}</span> <div class="flex">${renderStars(r5)}</div></div>
+                        </div>
+                        <div class="flex justify-between items-center bg-white p-2.5 rounded-xl border border-amber-100">
+                            <span>ความปลอดภัยสถานที่:</span>
+                            <div class="flex items-center gap-1"><span>${r6}</span> <div class="flex">${renderStars(r6)}</div></div>
+                        </div>
+                        <div class="flex justify-between items-center bg-white p-2.5 rounded-xl border border-amber-100 sm:col-span-2">
+                            <span>ความสะอาดสถานที่:</span>
+                            <div class="flex items-center gap-1"><span>${r7}</span> <div class="flex">${renderStars(r7)}</div></div>
+                        </div>
+                    </div>
+                </div>
+
                 ${item['อธิบายเพิ่มเติมเกี่ยวกับโรค หรือข้อจำกัดของน้อง (ถ้ามี)'] ? `
-                <div class="p-3 bg-amber-50/60 rounded-2xl border border-amber-100">
+                <div class="p-3 bg-warmbg rounded-2xl border border-amber-100">
                     <b class="text-amber-900 block mb-1">อาการ / ข้อจำกัดของน้อง:</b>
                     <p class="text-gray-600">${item['อธิบายเพิ่มเติมเกี่ยวกับโรค หรือข้อจำกัดของน้อง (ถ้ามี)']}</p>
                 </div>` : ''}
